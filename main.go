@@ -1,12 +1,14 @@
 package main
 
 import (
-	"log"
 
 	"github.com/gin-gonic/gin"
 )
 
+
+
 func main(){
+
 
 	Key := GenerateRandomKey()
 	SetJWTKey(Key)
@@ -16,4 +18,5 @@ func main(){
 
 	r.Run(":"+port)
 	log.Println("Server is running on port: ", port)
+	
 }
