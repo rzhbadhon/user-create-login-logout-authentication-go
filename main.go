@@ -1,22 +1,18 @@
 package main
 
 import (
-
-	"github.com/gin-gonic/gin"
+	"fmt"
+	"log"
+	"net/http"
 )
 
+func main() {
+	mux := http.NewServeMux()
 
+	fmt.Println("Server is starting on port :9000...")
 
-func main(){
-
-
-	Key := GenerateRandomKey()
-	SetJWTKey(Key)
-	r := gin.Default()
-
-	SetupRoutes(r)
-
-	r.Run(":"+port)
-	log.Println("Server is running on port: ", port)
-	
+	err := http.ListenAndServe(":9000", mux)
+	if err != nil {
+		log.Println("Error starting server ", err)
+	}
 }
