@@ -6,18 +6,22 @@ import (
 	"log"
 	"net/http"
 	"time"
+	"github.com/go-playground/validator/v10"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type User struct {
 	ID        string    `json:"id"`
-	FirstName string    `json:"first_name"`
-	LastName  string    `json:"last_name"`
-	Email     string    `json:"email"`
-	Password  string    `json:"password"`
+	FirstName string    `json:"first_name" validate: "required"`
+	LastName  string    `json:"last_name"  validate:"required"`
+	Email     string    `json:"email"    validate:"required,email"`
+	Password  string    `json:"password"   validate:"required,min=6"`
 	Role      string    `json:"role"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
+
+var validate = validator.New()
 
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Welcome to homepage")
@@ -36,6 +40,23 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println("Error request body: ", err)
 		return
 	}
+
+	err = validate.Struct(user)
+	if err != nil{
+		log.Println("Error hashing password", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	if err != nil{
+		log.Println("Error hashing password:", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	user.Password = string(hashedPassword)
+	user.ID = ""
 
 	w.Header().Set("Content-Type", "application/json")
 
