@@ -67,6 +67,21 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println("Error encoding JSON: ", err)
 		return
 	}
+	user.ID = "user_" + fmt.Sprintf("%d", time.Now().UnixNano())
+	user.Role = "user"
+	user.CreatedAt = time.Now()
+	user.UpdatedAt = time.Now()
+
+	log.Printf("New user created successfully: %s (ID: %s)", user.Email, user.ID)
+
+	user.Password = "" 
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated) // 201 Created
+	err = json.NewEncoder(w).Encode(user)
+	if err != nil {
+		log.Println("Error encoding JSON response:", err)
+	}
 
 	fmt.Fprintln(w, "This is signup page (POST)")
 }
