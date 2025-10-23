@@ -7,25 +7,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
-	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 )
 
-type Handler struct {
-	DB       *sqlx.DB
-	Validate *validator.Validate
-}
-
-func NewHandler(db *sqlx.DB) *Handler {
-	return &Handler{
-		DB:       db,
-		Validate: validator.New(),
-	}
-}
-
-func (h *Handler) SignupHandler(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) SignUpHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Only POST method allowed", http.StatusMethodNotAllowed)
 		return
@@ -39,7 +25,7 @@ func (h *Handler) SignupHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// validating the struct if all required is present 
+	// validating the struct if all required is present
 	err = h.Validate.Struct(user)
 	if err != nil {
 		http.Error(w, "Validation failed: "+err.Error(), http.StatusBadRequest)
@@ -59,9 +45,9 @@ func (h *Handler) SignupHandler(w http.ResponseWriter, r *http.Request) {
 	`
 
 	_, err = h.DB.NamedExec(query, &user)
-	if err != nil{
+	if err != nil {
 		pqErr, ok := err.(*pq.Error)
-		if ok && pqErr.Code == "23505"{
+		if ok && pqErr.Code == "23505" { // the code detects conflict
 			http.Error(w, "Email already exist", http.StatusConflict)
 			return
 		}
@@ -69,4 +55,11 @@ func (h *Handler) SignupHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
+
+	user.Password = ""
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(user)
+
 }
